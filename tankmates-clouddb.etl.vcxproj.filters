@@ -40,6 +40,9 @@
     <None Include=".github\workflows\terraform.yaml" />
     <None Include=".gitignore" />
     <None Include="infra\dns.tf" />
+    <None Include="infra\README.md" />
+    <None Include="etl\README.md" />
+    <None Include=".github\README.md" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="etl\requirements.txt" />

@@ -1,38 +1,112 @@
+##############################
+# Core
+##############################
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+##############################
+# Visual Studio / Build
+##############################
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+[Tt]emp/
+*.pidb
+*.svclog
+*.pdb
+*.mdb
+*.opendb
+*.cache
+*.ilk
+*.obj
+*.pch
+*.vspscc
+*.vssscc
+*.ncb
+*.sbr
+*.sdf
+*.opensdf
+*.dbmdl
+*.bak
+*.Backup
+*.log
+*.ldf
+*.mdf
+*.rdl.data
+*.rdl.designer.cs
+
+##############################
+# Python
+##############################
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pytest_cache/
+*.coverage
+.coverage.*
+.cache/
+.venv/
+venv/
+env/
+ENV/
+Pipfile.lock
+poetry.lock
+
+##############################
 # Terraform
-**/.terraform/*
+##############################
+.terraform/
 *.tfstate
 *.tfstate.*
-terraform.tfvars
-backend.tfvars
+*.tfplan
 crash.log
 override.tf
 override.tf.json
-*_override.tf
-*_override.tf.json
+*.tfvars
+!*.tfvars.example
 
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.venv/
-env/
-venv/
+# Local backend state (safe to ignore)
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfplan
+infra/*.tfvars
+!infra/*.tfvars.example
 
-# Node / misc
-node_modules/
-dist/
-build/
+##############################
+# TankMates Project
+##############################
+# SQLite and generated data
+etl/*.db
+etl/*.sqlite
+etl/*.csv
+etl/logs/
 
-# Data
-*.db
-*.sqlite
-*.sqlite3
-/data/*
-etl_log.csv
+# Uploads / blobs / scratch
+*.bak
+*.tmp
+*.swp
+*.zip
 
-# OS/editor
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
+##############################
+# Secrets / Keys
+##############################
+secrets.*
+*.key
+*.pem
+*.crt
+*.pfx
+*.json
+*.env
+.env.*
+.envrc

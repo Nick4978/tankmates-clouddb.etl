@@ -123,6 +123,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include=".github\README.md" />
     <None Include=".github\workflows\etl.yaml" />
     <None Include=".github\workflows\terraform.yaml" />
     <None Include=".gitignore" />
@@ -130,6 +131,7 @@
     <None Include="etl\config.json" />
     <None Include="etl\extract_sqlite.py" />
     <None Include="etl\load_cosmos.py" />
+    <None Include="etl\README.md" />
     <None Include="etl\run.py" />
     <None Include="etl\transform.py" />
     <None Include="infra\containerapps.tf" />
@@ -143,6 +145,7 @@
     <None Include="infra\outputs.tf" />
     <None Include="infra\private_endpoints.tf" />
     <None Include="infra\providers.tf" />
+    <None Include="infra\README.md" />
     <None Include="infra\storage.tf" />
     <None Include="infra\terraform.tfvars" />
     <None Include="infra\variables.tf" />

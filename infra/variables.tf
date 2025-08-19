@@ -32,7 +32,7 @@ variable "tags" {
 # GitHub OIDC binding
 variable "github_owner" {
   type    = string
-  default = "nick4978"
+  default = "Nick4978"
 }
 
 variable "github_repo" {
