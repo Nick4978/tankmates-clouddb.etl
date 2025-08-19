@@ -1,133 +1,66 @@
 name: etl-run
 
 on:
-  workflow_dispatch:
-    inputs:
-      artifact_name:
-        description: "Artifact containing tankmates.db"
-        default: "sqlite-db"
-        required: true
-      sqlite_blob_name:
-        description: "Blob name for SQLite DB in Storage"
-        default: "tankmates.db"
-        required: true
-      log_blob_name:
-        description: "Blob name for ETL CSV log in Storage"
-        default: "etl_log.csv"
-        required: true
+  workflow_dispatch:      # run it on demand
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  run:
+  trigger:
     runs-on: ubuntu-latest
-    env:
-      # OIDC -> Azure
-      ARM_USE_OIDC: true
-      ARM_TENANT_ID: ${{ vars.AZ_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ vars.AZ_SUBSCRIPTION_ID }}
-      ARM_CLIENT_ID: ${{ vars.AZ_GHA_CLIENT_ID }}
-
-      # These names are discovered dynamically below,
-      # but you can hardcode if you prefer:
-      RG_NAME: teracorp-east-resource-group
-
     steps:
-      - name: Checkout (for reference only)
-        uses: actions/checkout@v4
-
-      - name: Download SQLite artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ github.event.inputs.artifact_name }}
-          path: .
+      - uses: actions/checkout@v4
 
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ env.ARM_CLIENT_ID }}
-          tenant-id: ${{ env.ARM_TENANT_ID }}
-          subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Discover resource names from RG
-        id: discover
-        shell: bash
+      - name: Install Azure Container Apps CLI
         run: |
-          SA=$(az resource list --resource-group "$RG_NAME" --resource-type Microsoft.Storage/storageAccounts --query '[0].name' -o tsv)
-          CAE=$(az resource list --resource-group "$RG_NAME" --resource-type Microsoft.App/managedEnvironments --query '[0].name' -o tsv)
-          JOB=$(az resource list --resource-group "$RG_NAME" --resource-type Microsoft.App/jobs --query '[0].name' -o tsv)
+          az extension add --name containerapp --upgrade
+          az extension add --name containerapp-compose --upgrade || true
 
-          echo "SA_NAME=$SA"             >> $GITHUB_ENV
-          echo "CAE_NAME=$CAE"           >> $GITHUB_ENV
-          echo "JOB_NAME=$JOB"           >> $GITHUB_ENV
-          echo "CONTAINER=ingest"        >> $GITHUB_ENV
-          echo "SQLITE_BLOB=${{ github.event.inputs.sqlite_blob_name }}" >> $GITHUB_ENV
-          echo "LOG_BLOB=${{ github.event.inputs.log_blob_name }}"       >> $GITHUB_ENV
-
-          echo "Storage Account: $SA"
-          echo "Container Apps Env: $CAE"
-          echo "Job: $JOB"
-
-      - name: Upload SQLite DB to Blob (AAD)
-        shell: bash
-        run: |
-          ls -l
-          az storage blob upload \
-            --account-name "$SA_NAME" \
-            -c "$CONTAINER" \
-            -f "tankmates.db" \
-            -n "$SQLITE_BLOB" \
-            --auth-mode login \
-            --overwrite true
-
-      - name: Start ETL Job (no SAS; MI reads/writes Storage)
-        shell: bash
+      - name: Start ETL job
         run: |
           az containerapp job start \
-            --name "$JOB_NAME" \
-            --resource-group "$RG_NAME"
-          # Optional: print job executions
-          az containerapp job execution list \
-            --name "$JOB_NAME" \
-            --resource-group "$RG_NAME" \
-            --query "[].{name:name,status:status,created:creationTime}" -o table || true
+            --name tm-etl-job \
+            --resource-group teracorp-east-resource-group
 
-      - name: Wait for job completion (poll)
-        shell: bash
+      # Optional: wait for completion and dump latest logs
+      - name: Wait for job execution and print status
+        id: wait
         run: |
-          # Poll until latest execution is Succeeded/Completed/Failed (20 min max)
-          for i in {1..60}; do
-            sleep 20
-            STATUS=$(az containerapp job execution list \
-              --name "$JOB_NAME" --resource-group "$RG_NAME" \
-              --query "sort_by(@,&creationTime)[-1].status" -o tsv 2>/dev/null || echo "")
-            echo "Current status: $STATUS"
-            if [[ "$STATUS" == "Succeeded" || "$STATUS" == "Completed" || "$STATUS" == "Failed" ]]; then
+          # get latest execution id after a short wait
+          sleep 15
+          EXEC_ID=$(az containerapp job execution list \
+            --name tm-etl-job \
+            --resource-group teracorp-east-resource-group \
+            --query "[0].name" -o tsv)
+          echo "execution_id=$EXEC_ID" >> $GITHUB_OUTPUT
+
+          # poll until Succeeded/Failed/Stopped (timeout ~15m)
+          for i in {1..90}; do
+            STATUS=$(az containerapp job execution show \
+              --name tm-etl-job \
+              --resource-group teracorp-east-resource-group \
+              --job-execution-name "$EXEC_ID" \
+              --query "properties.status" -o tsv)
+            echo "Status: $STATUS"
+            if [ "$STATUS" = "Succeeded" ] || [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Stopped" ]; then
               break
             fi
+            sleep 10
           done
-          if [[ "$STATUS" != "Succeeded" && "$STATUS" != "Completed" ]]; then
-            echo "WARNING: job did not report success (last: $STATUS)"
-          fi
 
-      - name: Download ETL CSV (AAD)
-        shell: bash
+      - name: Show container logs (best-effort)
+        if: steps.wait.outputs.execution_id != ''
         run: |
-          az storage blob download \
-            --account-name "$SA_NAME" \
-            -c "$CONTAINER" \
-            -n "$LOG_BLOB" \
-            -f "$LOG_BLOB" \
-            --auth-mode login
-          ls -l "$LOG_BLOB" || true
-          echo "----- CSV head -----"
-          head -n 20 "$LOG_BLOB" || true
-          echo "--------------------"
-
-      - name: Publish ETL CSV as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: etl-log
-          path: ${{ env.LOG_BLOB }}
+          az containerapp job execution show \
+            --name tm-etl-job \
+            --resource-group teracorp-east-resource-group \
+            --job-execution-name "${{ steps.wait.outputs.execution_id }}" -o jsonc

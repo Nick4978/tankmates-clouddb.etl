@@ -1,35 +1,43 @@
 name: terraform
+
 on:
   workflow_dispatch:
   push:
     branches: [ master ]
-    paths:
-      - "infra/**"
+    paths: [ 'infra/**' ]
 
 permissions:
-  id-token: write
+  id-token: write     # required for OIDC
   contents: read
 
 jobs:
-  deploy:
+  plan_apply:
     runs-on: ubuntu-latest
-    env:
-      ARM_USE_OIDC: true
-      ARM_TENANT_ID: ${{ vars.AZ_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ vars.AZ_SUBSCRIPTION_ID }}
-      ARM_CLIENT_ID: ${{ vars.AZ_GHA_CLIENT_ID }} # set this repo var to output azuread_application.gha.application_id after first apply, or hardcode
+    defaults:
+      run:
+        working-directory: infra
     steps:
       - uses: actions/checkout@v4
-      - uses: azure/login@v2
-        with:
-          client-id: ${{ env.ARM_CLIENT_ID }}
-          tenant-id: ${{ env.ARM_TENANT_ID }}
-          subscription-id: ${{ env.ARM_SUBSCRIPTION_ID }}
 
-      - uses: hashicorp/setup-terraform@v3
-      - name: Terraform Init/Plan/Apply
-        working-directory: infra
-        run: |
-          terraform init
-          terraform plan -out tfplan
-          terraform apply -auto-approve tfplan
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.5
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Plan
+        run: terraform plan -input=false -out=tfplan
+
+      # Apply is manual-only (only when you click "Run workflow")
+      - name: Terraform Apply
+        if: github.event_name == 'workflow_dispatch'
+        run: terraform apply -input=false -auto-approve tfplan
