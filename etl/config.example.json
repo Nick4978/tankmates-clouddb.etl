@@ -1,0 +1,104 @@
+{
+  "database": "tankmatesdb",
+  "containers": {
+    "Fish": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [ "Cycling", "Hardiness", "ReefSafe", "CoralSafe", "InvertSafe", "Venomous", "IsBeingDragged", "IsBeingDraggedOver" ],
+      "dateFields": [ "DateAcquired", "DateRemoved", "WarrantyExpiration" ]
+    },
+    "Inverts": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [ "CoralSafe", "ReefSafe", "RockSafe", "FishSafe", "Venomous", "IsBeingDragged", "IsBeingDraggedOver" ],
+      "dateFields": [ "DateAcquired", "DateRemoved", "WarrantyExpiration" ]
+    },
+    "Plants": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [ "FishSafe", "InvertSafe", "IsBeingDragged", "IsBeingDraggedOver" ],
+      "dateFields": [ "DateAcquired", "DateRemoved", "WarrantyExpiration" ]
+    },
+    "Corals": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [ "Venomous", "IsBeingDragged", "IsBeingDraggedOver" ],
+      "dateFields": [ "DateAcquired", "DateRemoved", "WarrantyExpiration" ]
+    },
+    "Inhabitants": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [],
+      "dateFields": [ "DateAcquired", "DateRemoved", "WarrantyExpiration" ]
+    },
+    "Tasks": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [ "Snoozed" ],
+      "dateFields": [ "ReminderDate", "CompletedDate" ]
+    },
+    "Records": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [],
+      "dateFields": [ "DateTime" ]
+    },
+    "Tanks": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [],
+      "dateFields": [ "DateAcquired", "ShutdownDate", "WarrantyExpiration", "CycleBegin", "CycleEnd" ]
+    },
+    "Profile": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [],
+      "dateFields": [ "LastLogin" ]
+    },
+    "UserSettings": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [],
+      "dateFields": [ "LastBackup", "LastStart" ]
+    },
+    "MediaTypes": {
+      "pkField": "tenantId",
+      "idField": "Id"
+    },
+    "Pictures": {
+      "pkField": "tenantId",
+      "idField": "Id"
+    },
+    "WaterTestColorCharts": {
+      "pkField": "tenantId",
+      "idField": "Id"
+    },
+    "WaterTestInstructions": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [ "Important" ]
+    },
+    "WaterTestKits": {
+      "pkField": "tenantId",
+      "idField": "Id"
+    },
+    "WaterTestParameters": {
+      "pkField": "tenantId",
+      "idField": "Id"
+    },
+    "WaterTestTypes": {
+      "pkField": "tenantId",
+      "idField": "Id"
+    },
+    "WaterTests": {
+      "pkField": "tenantId",
+      "idField": "Id",
+      "boolFields": [ "UseColorChart", "Active" ]
+    }
+  },
+  "batchSize": 500,
+  "concurrency": 4,
+  "upsert": true,
+  "onConflict": "skip_log",
+  "tenantId": null
+}

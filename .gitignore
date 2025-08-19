@@ -1,0 +1,38 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+backend.tfvars
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+env/
+venv/
+
+# Node / misc
+node_modules/
+dist/
+build/
+
+# Data
+*.db
+*.sqlite
+*.sqlite3
+/data/*
+etl_log.csv
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
